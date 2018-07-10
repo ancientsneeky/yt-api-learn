@@ -1,26 +1,42 @@
-// After the API loads, call a function to enable the search box.
-function handleAPILoaded() {
-  $('#search-button').attr('disabled', false);
+const YOUTUBE_SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search';
+
+// YT video url https://www.youtube.com/watch?v=${results.id.videoId ???}
+
+function getDataFromApi(searchTerm, callback) {
+  const query = {
+    q: `${searchTerm} in:name`,
+    part: 'snippet',
+    key: 'AIzaSyBG76HYFNhzGbBrCZPfpXUDy-nvlSGk5iQ'
+    // per_page: 10
+  }
+  $.getJSON(YOUTUBE_SEARCH_URL, query, callback);
 }
 
-// Search for a specified string.
-function search() {
-  var q = $('#query').val();
-  var request = gapi.client.youtube.search.list({
-    q: q,
-    part: 'snippet'
-  });
+// function renderResult(result) {
+//   return `
+//     <div>
+//       <h2>
+//       <a class="js-result-name" href="${result.html_url}" target="_blank">${result.name}</a> by <a class="js-user-name" href="${result.owner.html_url}" target="_blank">${result.owner.login}</a></h2>
+//       <p>Number of watchers: <span class="js-watchers-count">${result.watchers_count}</span></p>
+//       <p>Number of open issues: <span class="js-issues-count">${result.open_issues}</span></p>
+//     </div>
+//   `;
+// }
 
-  request.execute(function(response) {
-    var str = JSON.stringify(response.result);
-    $('#search-container').html('<pre>' + str + '</pre>');
-  });
+function displayGitHubSearchData(data) {
+  console.log(data);
+  const results = data.items.map((item, index) => renderResult(item));
+  $('.js-search-results').html(results);
 }
 
 function watchSubmit() {
-  $('#query').on('click', event => {
-    console.log("search was clicked")
-    search();
+  $('.js-search-form').submit(event => {
+    event.preventDefault();
+    const queryTarget = $(event.currentTarget).find('.js-query');
+    const query = queryTarget.val();
+    // clear out the input
+    queryTarget.val("");
+    getDataFromApi(query, displayGitHubSearchData);
   });
 }
 
