@@ -54,9 +54,7 @@ function watchSubmit() {
 }
 
 function getSubmitValue(){
-    const queryTarget = $(event.currentTarget).find('.js-query');
-    const query = queryTarget.val();
-    return query;
+    return query = $('.js-query').val();
 }
 
 function pageCountMinusOne(){
