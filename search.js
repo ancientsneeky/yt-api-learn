@@ -1,8 +1,5 @@
 const YOUTUBE_SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search';
-
-// YT video url https://www.youtube.com/watch?v=${results.id.videoId ???}
-//paginaton
-
+pageCount = 0;
 
 function getDataFromApi(searchTerm, callback, pageTokenArg = "") {
   const query = {
@@ -19,42 +16,80 @@ function renderResult(result) {
     <div>
       <h2>
       <a class="js-result-name" href="https://www.youtube.com/watch?v=${result.id.videoId}" target="_blank"><img src="${result.snippet.thumbnails.medium.url}" alt="video link to ${result.snippet.title}" /></h2>
+      </a> by <a class="js-channel-name" href="https://www.youtube.com/channel/${result.snippet.channelId}"> ${result.snippet.channelTitle}</a>
     </div>
   `
-        // <p>Number of watchers: <span class="js-watchers-count">${result.watchers_count}</span></p>
-      // <p>Number of open issues: <span class="js-issues-count">${result.open_issues}</span></p>;
-      // </a> by <a class="js-channel-name" href="https://www.youtube.com/channel/${result.snippet.channelId}" target="_blank">${result.snippet.channelTitle}</a>
 }
 
-function displayGitHubSearchData(data) {
+function renderPageButtons(){
+  return `    
+  <a href="#" class="previous hidden">&laquo; Previous</a>
+  <a href="#" class="next">Next &raquo;</a>
+  `
+}
+
+function PageCountPlusOne() {
+  pageCount++;
+}
+
+function emptySearchForm(){
+  $('.js-search-page-button').empty();
+  $('.js-search-results').empty();
+}
+
+function displayYoutubeSearchData(data) {
   const results = data.items.map((item, index) => renderResult(item));
-  $('.js-search-results').html(results);
-  handlePageButtons(data);
+  $('.js-search-page-button').html(renderPageButtons());
   handleNextButton(data);
+  handlePrevButton(data);
+  displayPrevButton();
+  $('.js-search-results').html(results);
 }
 
 function watchSubmit() {
   $('.js-search-form').submit(event => {
-    event.preventDefault();
-    const queryTarget = $(event.currentTarget).find('.js-query');
-    const query = queryTarget.val();
-    // clear out the input
-    queryTarget.val("");
-    getDataFromApi(query, displayGitHubSearchData);
+    event.stopPropagation();
+    getDataFromApi(getSubmitValue(), displayYoutubeSearchData);
   });
 }
 
-function handlePageButtons(data){
-  console.log(data);
-  const $nextButton = $('.next');
-  $nextButton.removeClass('hidden');
+function getSubmitValue(){
+    const queryTarget = $(event.currentTarget).find('.js-query');
+    const query = queryTarget.val();
+    return query;
+}
+
+function pageCountMinusOne(){
+  pageCount--;
 }
 
 function handleNextButton(data) {
   $('.next').on('click', event => {
     event.preventDefault();
-    console.log("Next was clicked");
+    emptySearchForm();
+    const pageTokenArg = data.nextPageToken
+    getDataFromApi(getSubmitValue(), displayYoutubeSearchData, pageTokenArg);
+    PageCountPlusOne();
   });
+}
+
+function displayPrevButton() {
+  const $prevBtn = $('a.previous');
+  if (pageCount < 1) {
+  $prevBtn.addClass('hidden');
+  }
+  else {
+  $prevBtn.removeClass('hidden');
+  }
+}
+
+function handlePrevButton(data) {
+  $('.previous').on('click', event => {
+    pageCountMinusOne();
+    const pageTokenArg = data.prevPageToken;
+    getDataFromApi(getSubmitValue(), displayYoutubeSearchData, pageTokenArg);
+    displayPrevButton();
+    });
 }
 
 $(watchSubmit);
